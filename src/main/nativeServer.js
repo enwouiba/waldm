@@ -68,8 +68,9 @@ class NativeServer {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ ok: true, id: rec.id }));
           } catch (e) {
-            res.writeHead(500);
-            res.end('error');
+            console.error('[waldm] /capture failed:', e && e.stack ? e.stack : e);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ ok: false, error: String((e && e.message) || e) }));
           }
         });
         return;
