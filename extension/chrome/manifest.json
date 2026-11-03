@@ -1,12 +1,21 @@
 {
   "manifest_version": 3,
   "name": "WalDM Integration",
-  "version": "0.1.0",
-  "description": "Send downloads from your browser to WalDM for fast, resumable, multi-segment downloading.",
-  "permissions": ["downloads", "contextMenus", "storage", "notifications"],
-  "host_permissions": ["http://127.0.0.1/*"],
+  "version": "0.2.0",
+  "description": "Auto-detect videos and downloads in your browser (IDM-style) and send them to WalDM for fast, resumable downloading.",
+  "permissions": ["downloads", "contextMenus", "storage", "notifications", "webRequest", "tabs"],
+  "host_permissions": ["http://127.0.0.1/*", "<all_urls>"],
   "background": { "service_worker": "background.js" },
   "action": { "default_popup": "popup.html", "default_title": "WalDM" },
   "options_page": "options.html",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
   "icons": { "128": "icon128.png" }
 }

@@ -3,22 +3,43 @@
   <head>
     <meta charset="utf-8" />
     <style>
-      body { font: 13px system-ui, sans-serif; width: 300px; background: #0f1420; color: #e6ecf7; margin: 0; padding: 14px; }
-      h3 { margin: 0 0 10px; }
+      body { font: 13px system-ui, sans-serif; width: 330px; background: #0f1420; color: #e6ecf7; margin: 0; padding: 14px; }
+      h3 { margin: 0 0 10px; display: flex; align-items: center; gap: 6px; }
       input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #273149; background: #151c2c; color: #e6ecf7; box-sizing: border-box; }
-      button { width: 100%; margin-top: 10px; padding: 9px; border-radius: 8px; border: none; background: #2563eb; color: #fff; cursor: pointer; }
-      .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; margin-right: 6px; }
+      button.main { width: 100%; margin-top: 10px; padding: 9px; border-radius: 8px; border: none; background: #2563eb; color: #fff; cursor: pointer; }
+      button.main:hover { background: #3b82f6; }
+      .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
       .dot.on { background: #22c55e; }
       .foot { margin-top: 10px; font-size: 11px; color: #8a97b1; }
       a { color: #3b82f6; cursor: pointer; }
+      .sec { margin-top: 14px; border-top: 1px solid #273149; padding-top: 10px; }
+      .sec h4 { margin: 0 0 8px; font-size: 12px; color: #8a97b1; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+      .media { max-height: 220px; overflow: auto; }
+      .mrow { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 8px; cursor: pointer; }
+      .mrow:hover { background: #1d2638; }
+      .mi { width: 22px; height: 22px; border-radius: 5px; background: #1d2638; color: #3b82f6; display: grid; place-items: center; font-size: 11px; flex: none; }
+      .mmeta { overflow: hidden; }
+      .mname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .msub { font-size: 11px; color: #8a97b1; }
+      .empty { color: #8a97b1; font-size: 12px; padding: 4px 2px; }
     </style>
   </head>
   <body>
-    <h3>WalDM</h3>
-    <div class="foot"><span class="dot" id="dot"></span><span id="state">checking…</span></div>
-    <input type="text" id="url" placeholder="Paste a URL to download" />
-    <button id="send">Download with WalDM</button>
-    <div class="foot">Right-click any link → "Download with WalDM". <a id="opt">Options</a></div>
+    <h3><span class="dot" id="dot"></span> WalDM</h3>
+    <div class="foot" id="state" style="margin-top:-4px">checking…</div>
+
+    <div class="sec">
+      <h4>Detected on this page</h4>
+      <div class="media" id="media"><div class="empty">Scanning… open or play a video.</div></div>
+    </div>
+
+    <div class="sec">
+      <h4>Or paste a link</h4>
+      <input type="text" id="url" placeholder="https://…" />
+      <button class="main" id="send">Download with WalDM</button>
+    </div>
+
+    <div class="foot">Tip: a floating button appears on video pages. Right-click any link → "Download with WalDM". <a id="opt">Options</a></div>
     <script src="popup.js"></script>
   </body>
 </html>
