@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WalDM</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="toolbar">
+      <div class="brand"><span class="logo">⬇</span> WalDM</div>
+      <div class="actions">
+        <button id="btnAdd" class="btn primary">+ Add URL</button>
+        <button id="btnResumeAll" class="btn">Resume all</button>
+        <button id="btnPauseAll" class="btn">Pause all</button>
+      </div>
+      <div class="spacer"></div>
+      <div class="global-speed" id="globalSpeed">0 B/s</div>
+      <button id="btnSettings" class="btn ghost" title="Settings">⚙</button>
+    </header>
+
+    <nav class="filters">
+      <button class="chip active" data-filter="all">All</button>
+      <button class="chip" data-filter="downloading">Active</button>
+      <button class="chip" data-filter="paused">Paused</button>
+      <button class="chip" data-filter="completed">Completed</button>
+      <button class="chip" data-filter="error">Failed</button>
+      <input id="search" class="search" placeholder="Search…" />
+    </nav>
+
+    <main>
+      <table class="list">
+        <thead>
+          <tr>
+            <th class="c-name">Name</th>
+            <th class="c-size">Size</th>
+            <th class="c-prog">Progress</th>
+            <th class="c-speed">Speed</th>
+            <th class="c-status">Status</th>
+            <th class="c-act"></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div id="empty" class="empty">No downloads yet. Click <b>+ Add URL</b> or copy a link into WalDM from your browser.</div>
+    </main>
+
+    <!-- Add dialog -->
+    <div class="modal" id="addModal">
+      <div class="card">
+        <h3>Add download</h3>
+        <label>URL</label>
+        <input id="addUrl" class="field" placeholder="https://…" />
+        <div class="row2">
+          <div>
+            <label>Save to</label>
+            <div class="dirpick">
+              <input id="addDir" class="field" readonly />
+              <button id="btnChooseDir" class="btn">…</button>
+            </div>
+          </div>
+          <div>
+            <label>File name (optional)</label>
+            <input id="addName" class="field" placeholder="auto" />
+          </div>
+        </div>
+        <div class="row2">
+          <label class="inline"><input type="checkbox" id="addVideo" /> Treat as video (yt-dlp)</label>
+          <label class="inline">Schedule <input type="datetime-local" id="addSchedule" class="field small" /></label>
+        </div>
+        <div id="formatBox" class="formats hidden">
+          <label>Video quality</label>
+          <select id="addFormat" class="field"></select>
+          <button id="btnProbe" class="btn">Fetch qualities</button>
+          <span id="probeMsg" class="muted"></span>
+        </div>
+        <div class="modal-actions">
+          <button class="btn" id="addCancel">Cancel</button>
+          <button class="btn primary" id="addConfirm">Download</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings dialog -->
+    <div class="modal" id="setModal">
+      <div class="card">
+        <h3>Settings</h3>
+        <div class="row2">
+          <div>
+            <label>Default download folder</label>
+            <div class="dirpick">
+              <input id="setDir" class="field" readonly />
+              <button id="setChooseDir" class="btn">…</button>
+            </div>
+          </div>
+          <div>
+            <label>Max simultaneous downloads</label>
+            <input id="setConcurrent" class="field" type="number" min="1" max="20" />
+          </div>
+        </div>
+        <div class="row2">
+          <div>
+            <label>Connections per download (segments)</label>
+            <input id="setSegments" class="field" type="number" min="1" max="32" />
+          </div>
+          <div>
+            <label>Speed limit (KB/s, 0 = unlimited)</label>
+            <input id="setSpeed" class="field" type="number" min="0" />
+          </div>
+        </div>
+        <div class="bridge">
+          <h4>Browser integration</h4>
+          <p class="muted">Install the WalDM extension, then paste this into its options so it can send downloads here:</p>
+          <div class="dirpick">
+            <input id="bridgeToken" class="field mono" readonly />
+            <button id="btnCopyToken" class="btn">Copy</button>
+          </div>
+          <p class="muted">Bridge: <span id="bridgePort" class="mono"></span></p>
+        </div>
+        <div class="modal-actions">
+          <button class="btn" id="setCancel">Close</button>
+          <button class="btn primary" id="setSave">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>

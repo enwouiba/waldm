@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { font: 14px system-ui, sans-serif; background: #0f1420; color: #e6ecf7; padding: 24px; max-width: 480px; }
+      h2 { margin-top: 0; }
+      label { display: block; margin: 14px 0 4px; color: #8a97b1; }
+      input[type=text], input[type=number] { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #273149; background: #151c2c; color: #e6ecf7; }
+      .row { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
+      button { margin-top: 18px; padding: 9px 16px; border-radius: 8px; border: none; background: #2563eb; color: #fff; cursor: pointer; }
+      .status { margin-left: 10px; }
+      .muted { color: #8a97b1; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <h2>WalDM Integration</h2>
+    <p class="muted">In the WalDM app open <b>Settings ⚙ › Browser integration</b>, copy the token, and paste it here.</p>
+    <label>Pairing token</label>
+    <input type="text" id="token" placeholder="paste token from WalDM" />
+    <label>Bridge port</label>
+    <input type="number" id="port" value="7611" />
+    <label>Only capture files larger than (bytes, 0 = all)</label>
+    <input type="number" id="minBytes" value="0" />
+    <div class="row"><input type="checkbox" id="capture" /> <span>Automatically capture browser downloads</span></div>
+    <div class="row"><button id="save">Save</button><button id="test" style="background:#1d2638">Test connection</button><span class="status" id="status"></span></div>
+    <script src="options.js"></script>
+  </body>
+</html>

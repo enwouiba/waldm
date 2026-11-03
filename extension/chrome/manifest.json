@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "WalDM Integration",
+  "version": "0.1.0",
+  "description": "Send downloads from your browser to WalDM for fast, resumable, multi-segment downloading.",
+  "permissions": ["downloads", "contextMenus", "storage", "notifications"],
+  "host_permissions": ["http://127.0.0.1/*"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_popup": "popup.html", "default_title": "WalDM" },
+  "options_page": "options.html",
+  "icons": { "128": "icon128.png" }
+}

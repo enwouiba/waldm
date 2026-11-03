@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { font: 13px system-ui, sans-serif; width: 300px; background: #0f1420; color: #e6ecf7; margin: 0; padding: 14px; }
+      h3 { margin: 0 0 10px; }
+      input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #273149; background: #151c2c; color: #e6ecf7; box-sizing: border-box; }
+      button { width: 100%; margin-top: 10px; padding: 9px; border-radius: 8px; border: none; background: #2563eb; color: #fff; cursor: pointer; }
+      .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; margin-right: 6px; }
+      .dot.on { background: #22c55e; }
+      .foot { margin-top: 10px; font-size: 11px; color: #8a97b1; }
+      a { color: #3b82f6; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <h3>WalDM</h3>
+    <div class="foot"><span class="dot" id="dot"></span><span id="state">checking…</span></div>
+    <input type="text" id="url" placeholder="Paste a URL to download" />
+    <button id="send">Download with WalDM</button>
+    <div class="foot">Right-click any link → "Download with WalDM". <a id="opt">Options</a></div>
+    <script src="popup.js"></script>
+  </body>
+</html>
