@@ -113,6 +113,7 @@ main { flex: 1; overflow: auto; position: relative; }
 }
 .fname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 320px; }
 .furl { color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 320px; }
+.furl.err { color: var(--red); }
 
 .bar {
   height: 8px; background: var(--bg3); border-radius: 6px; overflow: hidden;

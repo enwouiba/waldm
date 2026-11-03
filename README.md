@@ -63,16 +63,23 @@ Output lands in `dist/`.
 
 ## yt-dlp (video capture)
 
-Install `yt-dlp` and make sure it's on `PATH` (or set `WALDM_YTDLP=/path/to/yt-dlp`).
-For merging video+audio, `ffmpeg` is also required.
+WalDM looks for `yt-dlp` in this order: `$WALDM_YTDLP` → `bin/ytdlp-venv/bin/yt-dlp`
+→ packaged `resources/bin/…` → `/usr/local/bin` → `/usr/bin` → `~/.local/bin`
+→ `PATH`. For merging hi-res video+audio, `ffmpeg` must also be installed.
+
+Recommended: a dedicated virtualenv next to the app (immune to system-Python
+upgrades, which commonly orphan a `pip --user` install with
+`ModuleNotFoundError: No module named 'yt_dlp'`):
 
 ```bash
-# Linux
-sudo apt install ffmpeg && pipx install yt-dlp   # or: pip install -U yt-dlp
+sudo apt install ffmpeg
+python3 -m venv bin/ytdlp-venv
+bin/ytdlp-venv/bin/pip install -U yt-dlp
 ```
 
-To ship it inside the app, drop the binary at `resources/bin/yt-dlp` in the
-packaged build.
+The desktop launcher (`waldm.sh`) auto-detects `bin/ytdlp-venv` and exports
+`WALDM_YTDLP`. To ship yt-dlp inside a packaged build, drop a standalone binary
+at `resources/bin/yt-dlp`.
 
 ## Browser extension setup
 

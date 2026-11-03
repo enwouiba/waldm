@@ -1,5 +1,6 @@
 node_modules/
 dist/
+bin/
 *.waldm
 *.log
 .DS_Store

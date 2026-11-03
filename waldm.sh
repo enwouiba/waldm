@@ -7,4 +7,8 @@
 export PATH="/home/kali/.nvm/versions/node/v20.20.2/bin:$PATH"
 cd "$(dirname "$(readlink -f "$0")")" || exit 1
 unset ELECTRON_RUN_AS_NODE
+# Prefer the bundled yt-dlp venv (immune to system Python upgrades).
+if [ -x "$PWD/bin/ytdlp-venv/bin/yt-dlp" ]; then
+  export WALDM_YTDLP="$PWD/bin/ytdlp-venv/bin/yt-dlp"
+fi
 exec node launch.js --no-sandbox "$@"

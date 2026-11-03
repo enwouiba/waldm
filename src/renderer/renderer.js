@@ -56,7 +56,7 @@ function renderRow(r) {
         <div class="ftype">${r.kind === 'video' ? '►' : ext(r.filename)}</div>
         <div>
           <div class="fname" title="${esc(r.filename || r.url)}">${esc(r.filename || '(resolving…)')}</div>
-          <div class="furl" title="${esc(r.url)}">${esc(r.url)}</div>
+          <div class="furl ${r.state === 'error' && r.error ? 'err' : ''}" title="${esc(r.state === 'error' && r.error ? r.error : r.url)}">${esc(r.state === 'error' && r.error ? '⚠ ' + r.error : r.url)}</div>
         </div>
       </div>
     </td>
@@ -66,7 +66,7 @@ function renderRow(r) {
       <span class="pct">${r.state === 'completed' ? '100%' : pct + '%'}${r.total ? ' · ' + human(r.received) : ''}</span>
     </td>
     <td>${r.state === 'downloading' ? human(r.speed) + '/s' : '—'}</td>
-    <td><span class="status ${r.state}">${statusLabel(r)}</span></td>
+    <td><span class="status ${r.state}" title="${esc(r.error || statusLabel(r))}">${statusLabel(r)}</span></td>
     <td>
       <div class="rowact">
         ${canPause ? btn('pause', '⏸', 'Pause') : ''}

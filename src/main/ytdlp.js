@@ -9,10 +9,14 @@ const fs = require('fs');
 function resolveYtDlp() {
   const candidates = [
     process.env.WALDM_YTDLP,
+    // Dedicated venv shipped/created next to the app (survives system Python
+    // upgrades that orphan a --user install).
+    path.join(__dirname, '..', '..', 'bin', 'ytdlp-venv', 'bin', 'yt-dlp'),
+    path.join(process.resourcesPath || '', 'bin', 'ytdlp-venv', 'bin', 'yt-dlp'),
     path.join(process.resourcesPath || '', 'bin', 'yt-dlp'),
-    '/home/' + (process.env.USER || 'user') + '/.local/bin/yt-dlp',
     '/usr/local/bin/yt-dlp',
     '/usr/bin/yt-dlp',
+    '/home/' + (process.env.USER || 'user') + '/.local/bin/yt-dlp',
     'yt-dlp', // PATH fallback
   ].filter(Boolean);
   for (const c of candidates) {
@@ -111,17 +115,40 @@ class VideoDownload extends EventEmitter {
       '--print',
       'after_move:filepath',
     ];
-    if (this.formatId) args.push('-f', this.formatId + '+bestaudio/best', '--merge-output-format', 'mp4');
+    // Format selection that degrades gracefully:
+    //  - a chosen (often video-only) id: try id+audio, then id alone, then best
+    //  - no choice: best video+audio merged, else best progressive
+    const fmt = this.formatId
+      ? `${this.formatId}+bestaudio/${this.formatId}/bestvideo+bestaudio/best`
+      : 'bestvideo*+bestaudio/best';
+    args.push('-f', fmt, '--merge-output-format', 'mp4');
     args.push(this.url);
 
     this._setState('downloading');
-    this.proc = spawn(YTDLP, args);
+    this._errTail = '';
+    try {
+      this.proc = spawn(YTDLP, args);
+    } catch (e) {
+      this._setState('error');
+      return this.emit('error', new Error('Cannot start yt-dlp: ' + e.message));
+    }
     this.proc.on('error', (e) => {
       this._setState('error');
-      this.emit('error', new Error('yt-dlp: ' + e.message));
+      this.emit(
+        'error',
+        new Error(
+          e.code === 'ENOENT'
+            ? 'yt-dlp not found. Install it (see README) or set WALDM_YTDLP.'
+            : 'yt-dlp: ' + e.message
+        )
+      );
     });
     this.proc.stdout.on('data', (buf) => this._parse(buf.toString()));
-    this.proc.stderr.on('data', (buf) => this._parse(buf.toString()));
+    this.proc.stderr.on('data', (buf) => {
+      const t = buf.toString();
+      this._errTail = (this._errTail + t).slice(-800);
+      this._parse(t);
+    });
     this.proc.on('close', (code) => {
       if (this._paused) {
         this._setState('paused');
@@ -133,7 +160,9 @@ class VideoDownload extends EventEmitter {
         this.emit('done', { filePath: this.filePath });
       } else {
         this._setState('error');
-        this.emit('error', new Error('yt-dlp exited ' + code));
+        const lines = this._errTail.split(/\r|\n/).filter((l) => /error|traceback|unavailable|not found|modulenotfound/i.test(l));
+        const detail = (lines.pop() || this._errTail.trim().split(/\r|\n/).pop() || '').slice(0, 200);
+        this.emit('error', new Error(detail ? 'yt-dlp: ' + detail : 'yt-dlp exited ' + code));
       }
     });
   }
