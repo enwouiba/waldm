@@ -7,7 +7,8 @@
   "license": "MIT",
   "main": "src/main/main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "node launch.js",
+    "start:direct": "electron .",
     "engine:test": "node src/main/engineCli.js",
     "dist": "electron-builder",
     "dist:linux": "electron-builder --linux",
