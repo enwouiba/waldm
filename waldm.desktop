@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=WalDM
+GenericName=Download Manager
+Comment=Fast multi-segment download manager with browser integration and video capture
+Exec=/home/kali/waldm/waldm.sh %U
+Icon=/home/kali/waldm/assets/icon.png
+Terminal=false
+Categories=Network;FileTransfer;
+Keywords=download;manager;idm;video;accelerator;
+StartupNotify=true
+StartupWMClass=WalDM
