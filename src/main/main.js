@@ -30,17 +30,47 @@ function createWindow() {
   });
   win.setMenuBarVisibility(false);
   win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
+  // When the window is closed the app stays alive in the tray, but the
+  // BrowserWindow object is destroyed. Drop the reference so later sends don't
+  // throw "Object has been destroyed" (which was surfacing to the browser
+  // bridge as HTTP 500 on every capture).
+  win.on('closed', () => {
+    win = null;
+  });
+}
+
+// True only when we have a live, usable window.
+function winAlive() {
+  return !!win && !win.isDestroyed();
+}
+
+// Send to the renderer only if it's alive; never let a dead window throw.
+function safeSend(channel, payload) {
+  if (winAlive()) {
+    try {
+      win.webContents.send(channel, payload);
+    } catch (_) {
+      /* window went away mid-send */
+    }
+  }
+}
+
+// Bring the app to the foreground, recreating the window if it was closed.
+function showWindow() {
+  if (!winAlive()) {
+    createWindow();
+    return;
+  }
+  if (win.isMinimized()) win.restore();
+  win.show();
 }
 
 function wireManagerToRenderer() {
-  manager.on('item', (rec) => win && win.webContents.send('dm:item', rec));
-  manager.on('removed', (id) => win && win.webContents.send('dm:removed', id));
+  manager.on('item', (rec) => safeSend('dm:item', rec));
+  manager.on('removed', (id) => safeSend('dm:removed', id));
   manager.on('captured', (rec) => {
-    if (win) {
-      win.webContents.send('dm:captured', rec);
-      if (win.isMinimized()) win.restore();
-      win.show();
-    }
+    safeSend('dm:captured', rec);
+    showWindow();
   });
 }
 
@@ -65,7 +95,7 @@ function setupIpc() {
     if (rec && rec.filePath) shell.showItemInFolder(rec.filePath);
   });
   ipcMain.handle('dm:chooseDir', async () => {
-    const r = await dialog.showOpenDialog(win, { properties: ['openDirectory', 'createDirectory'] });
+    const r = await dialog.showOpenDialog(winAlive() ? win : undefined, { properties: ['openDirectory', 'createDirectory'] });
     return r.canceled ? null : r.filePaths[0];
   });
 }
@@ -76,14 +106,14 @@ function setupTray() {
     tray.setToolTip('WalDM');
     tray.setContextMenu(
       Menu.buildFromTemplate([
-        { label: 'Open WalDM', click: () => (win ? win.show() : createWindow()) },
+        { label: 'Open WalDM', click: () => showWindow() },
         {
           label: 'Add from clipboard',
           click: () => {
             const text = clipboard.readText().trim();
             if (/^https?:\/\//i.test(text)) {
               manager.add({ url: text });
-              if (win) win.show();
+              showWindow();
             }
           },
         },
@@ -91,31 +121,39 @@ function setupTray() {
         { label: 'Quit', click: () => app.quit() },
       ])
     );
-    tray.on('click', () => (win ? win.show() : createWindow()));
+    tray.on('click', () => showWindow());
   } catch {
     /* tray may be unavailable on some headless Linux setups */
   }
 }
 
-app.whenReady().then(() => {
-  store = new Store(app.getPath('userData'));
-  store.load();
-  if (!store.getSetting('downloadDir', null)) {
-    store.setSetting('downloadDir', app.getPath('downloads'));
-  }
-  manager = new DownloadManager(store);
-  bridge = new NativeServer({ manager, store, port: 7611 });
-  bridge.start();
+// Only one WalDM may run: a second instance would fight over port 7611 (the
+// browser bridge) and the userData files. Hand focus to the running one.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', () => showWindow());
 
-  createWindow();
-  wireManagerToRenderer();
-  setupIpc();
-  setupTray();
+  app.whenReady().then(() => {
+    store = new Store(app.getPath('userData'));
+    store.load();
+    if (!store.getSetting('downloadDir', null)) {
+      store.setSetting('downloadDir', app.getPath('downloads'));
+    }
+    manager = new DownloadManager(store);
+    bridge = new NativeServer({ manager, store, port: 7611 });
+    bridge.start();
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    createWindow();
+    wireManagerToRenderer();
+    setupIpc();
+    setupTray();
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
   });
-});
+}
 
 app.on('window-all-closed', () => {
   // Keep running in tray on Windows/Linux; standard quit on macOS behavior.

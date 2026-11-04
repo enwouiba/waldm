@@ -22,7 +22,7 @@ async function cfg() {
 async function sendToWalDM(payload) {
   const c = await cfg();
   if (!c.token) {
-    notify('WalDM not configured', 'Open the extension options and paste the pairing token from WalDM › Settings.');
+    notify('WalDM not configured', 'Open the extension options and paste the pairing token from WalDM › Settings.', { id: 'waldm-config', throttleMs: 10000 });
     return false;
   }
   try {
@@ -34,14 +34,26 @@ async function sendToWalDM(payload) {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return true;
   } catch (e) {
-    notify('WalDM unreachable', 'Is the WalDM app running? (' + e.message + ')');
+    notify('WalDM unreachable', 'Is the WalDM app running? (' + e.message + ')', { id: 'waldm-error', throttleMs: 10000 });
     return false;
   }
 }
 
-function notify(title, message) {
+// Notifications reuse a stable id per "kind" so a new one REPLACES the old
+// instead of stacking, and errors are throttled — otherwise a run of failed
+// captures (e.g. WalDM briefly down) buries the screen in identical toasts.
+const _notifyAt = {};
+function notify(title, message, opts = {}) {
+  const id = opts.id || 'waldm';
+  const throttleMs = opts.throttleMs || 0;
   try {
-    chrome.notifications.create({ type: 'basic', iconUrl: 'icon128.png', title, message });
+    if (throttleMs) {
+      const now = Date.now();
+      if (now - (_notifyAt[id] || 0) < throttleMs) return;
+      _notifyAt[id] = now;
+    }
+    // Passing a fixed id makes chrome replace any existing notification with it.
+    chrome.notifications.create(id, { type: 'basic', iconUrl: 'icon128.png', title, message });
   } catch {
     /* optional */
   }
@@ -111,7 +123,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   const url = info.linkUrl || info.srcUrl || info.selectionText || (tab && tab.url);
   if (url && /^https?:\/\//i.test(url)) {
     sendToWalDM({ url, kind: info.mediaType === 'video' ? 'video' : undefined }).then(
-      (ok) => ok && notify('Sent to WalDM', url)
+      (ok) => ok && notify('Sent to WalDM', url, { id: 'waldm-ok', throttleMs: 3000 })
     );
   }
 });
@@ -135,7 +147,7 @@ chrome.downloads.onCreated.addListener(async (item) => {
     } catch {
       /* already gone */
     }
-    notify('Captured by WalDM', u);
+    notify('Captured by WalDM', u, { id: 'waldm-ok', throttleMs: 3000 });
   }
 });
 
