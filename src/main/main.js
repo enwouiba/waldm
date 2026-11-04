@@ -68,9 +68,12 @@ function showWindow() {
 function wireManagerToRenderer() {
   manager.on('item', (rec) => safeSend('dm:item', rec));
   manager.on('removed', (id) => safeSend('dm:removed', id));
-  manager.on('captured', (rec) => {
+  // Auto-captured browser downloads arrive "silent": update the list quietly,
+  // without yanking the window to the foreground on every one. Only an explicit
+  // user action (right-click / popup / floating button) raises the window.
+  manager.on('captured', (rec, meta) => {
     safeSend('dm:captured', rec);
-    showWindow();
+    if (!meta || !meta.silent) showWindow();
   });
 }
 

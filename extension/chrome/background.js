@@ -129,16 +129,25 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 // ---- auto-capture normal downloads ----
+// Inline thumbnails / page images some sites stream as "downloads" — never
+// real files the user wants, so don't vacuum them into WalDM.
+const INLINE_IMG =
+  /(encrypted-tbn\d*\.gstatic\.com|\.gstatic\.com\/images|i\.ytimg\.com|img\.youtube\.com|\.ggpht\.com|\.fbcdn\.net|media-amazon\.com\/images|\/favicon|\.svg(\?|#|$))/i;
+
 chrome.downloads.onCreated.addListener(async (item) => {
   const c = await cfg();
   if (!c.capture) return;
   const u = item.finalUrl || item.url || '';
   if (!/^https?:\/\//i.test(u)) return;
+  if (INLINE_IMG.test(u)) return;
   if (c.minBytes && item.fileSize > 0 && item.fileSize < c.minBytes) return;
+  // Hand it to WalDM quietly (silent: no desktop toast, don't steal focus) and
+  // cancel the browser's own copy so there's no duplicate.
   const ok = await sendToWalDM({
     url: u,
     filename: item.filename ? item.filename.split(/[\\/]/).pop() : undefined,
     referrer: item.referrer || undefined,
+    silent: true,
   });
   if (ok) {
     try {
@@ -147,7 +156,7 @@ chrome.downloads.onCreated.addListener(async (item) => {
     } catch {
       /* already gone */
     }
-    notify('Captured by WalDM', u, { id: 'waldm-ok', throttleMs: 3000 });
+    // No per-capture notification — the WalDM window + badge are the feedback.
   }
 });
 

@@ -64,7 +64,9 @@ class NativeServer {
               filename: data.filename || undefined,
               kind: data.kind || undefined,
             });
-            this.manager.emit('captured', rec);
+            // `silent` (auto-captured downloads) updates the UI without raising
+            // the window; explicit user sends omit it and bring WalDM forward.
+            this.manager.emit('captured', rec, { silent: !!data.silent });
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ ok: true, id: rec.id }));
           } catch (e) {
