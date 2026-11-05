@@ -11,6 +11,10 @@
     /(youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com|tiktok\.com|facebook\.com|fb\.watch|instagram\.com|twitch\.tv|twitter\.com|x\.com|bilibili\.com|ok\.ru|rumble\.com|streamable\.com)/i;
 
   let fab, hiddenForUrl = null;
+  // Media the background sniffed for THIS tab (m3u8/mpd/mp4/…). Refreshed by the
+  // poll below. Lets us light up the button for players that live in an iframe
+  // or stream over HLS/DASH — exactly the cases a bare <video> check misses.
+  let sniffed = [];
 
   function hasRealVideo() {
     if (VIDEO_HOST.test(location.hostname)) return true;
@@ -20,6 +24,26 @@
       }
     }
     return false;
+  }
+
+  // Anything worth a button: a real local <video>, OR a stream the background
+  // caught on the network for this tab (covers iframe players + HLS/DASH).
+  function hasDownloadable() {
+    return hasRealVideo() || sniffed.length > 0;
+  }
+
+  // Pick the most useful sniffed URL to hand WalDM: a progressive file (mp4/…)
+  // beats a manifest, a manifest beats nothing, and bigger beats smaller.
+  function bestSniffed() {
+    if (!sniffed.length) return null;
+    const rank = (u) => {
+      if (/\.(mp4|webm|mkv|mov|m4a|mp3)(\?|#|$)/i.test(u)) return 3;
+      if (/\.(m3u8|mpd)(\?|#|$)/i.test(u)) return 2;
+      return 1;
+    };
+    return sniffed
+      .slice()
+      .sort((a, b) => rank(b.url) - rank(a.url) || (b.size || 0) - (a.size || 0))[0];
   }
 
   function makeFab() {
@@ -49,8 +73,17 @@
         return;
       }
       tx.textContent = 'Sending…';
+      // Prefer the actual stream the browser fetched (works on course sites and
+      // custom players yt-dlp can't resolve from the page URL alone). Only fall
+      // back to the page URL on known video hosts (youtube/vimeo/…), where
+      // yt-dlp does the extraction itself.
+      const best = bestSniffed();
+      const onHost = VIDEO_HOST.test(location.hostname);
+      const payload = best && !onHost
+        ? { url: best.url, kind: 'video', referrer: location.href, pageTitle: document.title }
+        : { url: location.href, kind: 'video' };
       chrome.runtime.sendMessage(
-        { type: 'send', payload: { url: location.href, kind: 'video' } },
+        { type: 'send', payload },
         (res) => {
           const ok = res && res.ok;
           tx.textContent = ok ? 'Sent ✓' : 'Failed — is WalDM open?';
@@ -96,11 +129,28 @@
   }
 
   function sync() {
-    if (hasRealVideo()) {
+    if (hasDownloadable()) {
       if (!fab) fab = makeFab();
       if (hiddenForUrl !== location.href) fab.style.display = '';
+      // Hint how many streams we caught, so the button reads as "live".
+      const tx = fab.querySelector('.waldm-tx');
+      if (tx && !/Sending|Sent|Failed/.test(tx.textContent)) {
+        tx.textContent = sniffed.length > 1 ? `Download with WalDM (${sniffed.length})` : 'Download with WalDM';
+      }
     } else if (fab) {
       fab.style.display = 'none';
+    }
+  }
+
+  // Ask the background for the streams it sniffed on this tab.
+  function refreshSniffed() {
+    try {
+      chrome.runtime.sendMessage({ type: 'media' }, (r) => {
+        if (chrome.runtime.lastError) return; // service worker asleep; retry next tick
+        sniffed = (r && r.items) || [];
+      });
+    } catch (_) {
+      /* extension context invalidated (reloaded) */
     }
   }
 
@@ -111,8 +161,11 @@
     if (location.href !== lastUrl) {
       lastUrl = location.href;
       hiddenForUrl = null;
+      sniffed = [];
     }
+    refreshSniffed();
     sync();
   }, 1200);
+  refreshSniffed();
   sync();
 })();

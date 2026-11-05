@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WalDM Integration",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Auto-detect videos and downloads in your browser (IDM-style) and send them to WalDM for fast, resumable downloading.",
   "permissions": ["downloads", "contextMenus", "storage", "notifications", "webRequest", "tabs"],
   "host_permissions": ["http://127.0.0.1/*", "<all_urls>"],
